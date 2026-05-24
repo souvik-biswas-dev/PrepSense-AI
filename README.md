@@ -105,6 +105,286 @@ App runs at `http://localhost:5173`, API at `http://localhost:3000`.
 
 ---
 
+## Low-Level Design
+
+### Class Diagram
+
+```mermaid
+classDiagram
+    class User {
+        +ObjectId _id
+        +String username
+        +String email
+        +String password
+    }
+
+    class BlacklistToken {
+        +ObjectId _id
+        +String token
+        +Date createdAt
+    }
+
+    class InterviewReport {
+        +ObjectId _id
+        +String jobDescription
+        +String resume
+        +String selfDescription
+        +Number matchScore
+        +TechnicalQuestion[] technicalQuestions
+        +BehavioralQuestion[] behavioralQuestions
+        +SkillGap[] skillGaps
+        +PreparationPlan[] preparationPlan
+        +ObjectId user
+        +String title
+        +Date createdAt
+        +Date updatedAt
+    }
+
+    class TechnicalQuestion {
+        +String question
+        +String intention
+        +String answer
+    }
+
+    class BehavioralQuestion {
+        +String question
+        +String intention
+        +String answer
+    }
+
+    class SkillGap {
+        +String skill
+        +String severity
+    }
+
+    class PreparationPlan {
+        +Number day
+        +String focus
+        +String[] tasks
+    }
+
+    class AuthController {
+        +registerUserController(req, res)
+        +loginUserController(req, res)
+        +logoutUserController(req, res)
+        +getMeController(req, res)
+    }
+
+    class InterviewController {
+        +generateInterViewReportController(req, res)
+        +getInterviewReportByIdController(req, res)
+        +getAllInterviewReportsController(req, res)
+        +generateResumePdfController(req, res)
+    }
+
+    class AIService {
+        -GoogleGenAI ai
+        -ZodSchema interviewReportSchema
+        +generateInterviewReport(resume, selfDescription, jobDescription) Object
+        +generateResumePdf(resume, selfDescription, jobDescription) Buffer
+        -generatePdfFromHtml(htmlContent) Buffer
+    }
+
+    class AuthMiddleware {
+        +authUser(req, res, next)
+    }
+
+    class FileMiddleware {
+        +upload Multer
+    }
+
+    class AuthContext {
+        +User user
+        +login(email, password)
+        +register(username, email, password)
+        +logout()
+        +fetchUser()
+    }
+
+    class InterviewContext {
+        +InterviewReport[] reports
+        +InterviewReport currentReport
+        +fetchReports()
+        +fetchReportById(id)
+        +generateReport(formData)
+        +downloadResumePdf(reportId)
+    }
+
+    class AuthAPI {
+        +register(username, email, password)
+        +login(email, password)
+        +logout()
+        +getMe()
+    }
+
+    class InterviewAPI {
+        +generateInterviewReport(jobDescription, selfDescription, resumeFile)
+        +getInterviewReportById(interviewId)
+        +getAllInterviewReports()
+        +generateResumePdf(interviewReportId)
+    }
+
+    InterviewReport "many" --> "1" User : belongs to
+    InterviewReport "1" *-- "many" TechnicalQuestion : contains
+    InterviewReport "1" *-- "many" BehavioralQuestion : contains
+    InterviewReport "1" *-- "many" SkillGap : contains
+    InterviewReport "1" *-- "many" PreparationPlan : contains
+
+    AuthController --> User : queries/creates
+    AuthController --> BlacklistToken : creates/queries
+    InterviewController --> InterviewReport : queries/creates
+    InterviewController --> AIService : calls
+
+    AuthMiddleware --> BlacklistToken : checks blacklist
+    AuthMiddleware --> AuthController : guards routes
+
+    AuthContext --> AuthAPI : uses
+    InterviewContext --> InterviewAPI : uses
+```
+
+---
+
+### Sequence Diagrams
+
+#### User Registration
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant FE as Frontend (React)
+    participant BE as Express API
+    participant DB as MongoDB
+
+    User->>FE: Fill registration form
+    FE->>BE: POST /api/auth/register {username, email, password}
+    BE->>DB: findOne({username} OR {email})
+    DB-->>BE: null (user not found)
+    BE->>BE: bcrypt.hash(password, 10)
+    BE->>DB: userModel.create({username, email, hashedPassword})
+    DB-->>BE: savedUser
+    BE->>BE: jwt.sign({id, username}, JWT_SECRET, {expiresIn: "1d"})
+    BE-->>FE: 201 {user} + Set-Cookie: token (HTTP-only)
+    FE->>FE: AuthContext.setUser(user)
+    FE-->>User: Redirect to Home
+```
+
+#### User Login
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant FE as Frontend (React)
+    participant BE as Express API
+    participant DB as MongoDB
+
+    User->>FE: Fill login form
+    FE->>BE: POST /api/auth/login {email, password}
+    BE->>DB: userModel.findOne({email})
+    DB-->>BE: user
+    BE->>BE: bcrypt.compare(password, user.password)
+    BE->>BE: jwt.sign({id, username}, JWT_SECRET)
+    BE-->>FE: 200 {user} + Set-Cookie: token
+    FE->>FE: AuthContext.setUser(user)
+    FE-->>User: Redirect to Home
+```
+
+#### User Logout
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant FE as Frontend (React)
+    participant BE as Express API
+    participant DB as MongoDB
+
+    User->>FE: Click Logout
+    FE->>BE: GET /api/auth/logout (cookie: token)
+    BE->>DB: blacklistTokenModel.create({token})
+    DB-->>BE: saved
+    BE->>BE: res.clearCookie("token")
+    BE-->>FE: 200 {message}
+    FE->>FE: AuthContext.setUser(null)
+    FE-->>User: Redirect to Login
+```
+
+#### Generate Interview Report
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant FE as Frontend (React)
+    participant BE as Express API
+    participant MW as Auth + File Middleware
+    participant AI as AIService (Gemini)
+    participant DB as MongoDB
+
+    User->>FE: Submit form (resume PDF, jobDescription, selfDescription)
+    FE->>BE: POST /api/interview/ multipart/form-data
+    BE->>MW: authUser() — validate JWT cookie
+    MW->>DB: blacklistTokenModel.findOne({token})
+    DB-->>MW: null (valid token)
+    MW->>MW: jwt.verify(token) → req.user
+    MW->>BE: next()
+    BE->>BE: pdf-parse → extract resume text
+    BE->>AI: generateInterviewReport({resume, selfDescription, jobDescription})
+    AI->>AI: Build Gemini prompt + Zod schema
+    AI->>AI: gemini-3-flash-preview → structured JSON
+    AI-->>BE: {matchScore, technicalQuestions, behavioralQuestions, skillGaps, preparationPlan, title}
+    BE->>DB: interviewReportModel.create({user, ...aiReport})
+    DB-->>BE: savedReport
+    BE-->>FE: 201 {interviewReport}
+    FE->>FE: InterviewContext.setCurrentReport(report)
+    FE-->>User: Render Interview Report page
+```
+
+#### Get All Interview Reports
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant FE as Frontend (React)
+    participant BE as Express API
+    participant MW as Auth Middleware
+    participant DB as MongoDB
+
+    User->>FE: Navigate to Home
+    FE->>BE: GET /api/interview/ (cookie: token)
+    BE->>MW: authUser() — validate JWT cookie
+    MW-->>BE: req.user set
+    BE->>DB: interviewReportModel.find({user: req.user.id}).sort({createdAt: -1}).select(summary fields)
+    DB-->>BE: reports[]
+    BE-->>FE: 200 {interviewReports}
+    FE-->>User: Display report cards
+```
+
+#### Download Tailored Resume PDF
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant FE as Frontend (React)
+    participant BE as Express API
+    participant MW as Auth Middleware
+    participant AI as AIService (Gemini + Puppeteer)
+    participant DB as MongoDB
+
+    User->>FE: Click "Download Resume PDF"
+    FE->>BE: POST /api/interview/resume/pdf/:reportId (cookie: token)
+    BE->>MW: authUser() — validate JWT
+    MW-->>BE: req.user set
+    BE->>DB: interviewReportModel.findById(reportId)
+    DB-->>BE: {resume, jobDescription, selfDescription}
+    BE->>AI: generateResumePdf({resume, jobDescription, selfDescription})
+    AI->>AI: Gemini prompt → HTML resume string
+    AI->>AI: puppeteer.launch() → page.setContent(html) → page.pdf()
+    AI-->>BE: pdfBuffer
+    BE-->>FE: 200 application/pdf (binary blob)
+    FE->>FE: Create blob URL → trigger download
+    FE-->>User: resume_<id>.pdf downloaded
+```
+
+---
+
 ## License
 
 MIT
