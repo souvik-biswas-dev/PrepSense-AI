@@ -8,14 +8,57 @@ const Home = () => {
     const { loading, generateReport,reports } = useInterview()
     const [ jobDescription, setJobDescription ] = useState("")
     const [ selfDescription, setSelfDescription ] = useState("")
+    const [ resumeFile, setResumeFile ] = useState(null)
+    const [ error, setError ] = useState("")
     const resumeInputRef = useRef()
 
     const navigate = useNavigate()
 
+    const MAX_RESUME_SIZE = 3 * 1024 * 1024 // must match backend multer limit (3MB)
+
+    const handleResumeChange = (e) => {
+        setError("")
+        const file = e.target.files[ 0 ]
+        if (!file) {
+            setResumeFile(null)
+            return
+        }
+        if (!file.name.toLowerCase().endsWith(".pdf")) {
+            setError("Only PDF resumes are supported.")
+            e.target.value = ""
+            setResumeFile(null)
+            return
+        }
+        if (file.size > MAX_RESUME_SIZE) {
+            setError("Resume is too large. Max size is 3MB.")
+            e.target.value = ""
+            setResumeFile(null)
+            return
+        }
+        setResumeFile(file)
+    }
+
     const handleGenerateReport = async () => {
-        const resumeFile = resumeInputRef.current.files[ 0 ]
-        const data = await generateReport({ jobDescription, selfDescription, resumeFile })
-        navigate(`/interview/${data._id}`)
+        setError("")
+        if (!jobDescription.trim()) {
+            setError("Job description is required.")
+            return
+        }
+        if (!resumeFile && !selfDescription.trim()) {
+            setError("Please upload a resume or write a self-description.")
+            return
+        }
+        try {
+            const data = await generateReport({ jobDescription, selfDescription, resumeFile })
+            if (data?._id) {
+                navigate(`/interview/${data._id}`)
+            } else {
+                setError("Could not generate the report. Please try again.")
+            }
+        } catch (err) {
+            console.log(err)
+            setError("Something went wrong while generating your plan.")
+        }
     }
 
     if (loading) {
@@ -75,13 +118,22 @@ const Home = () => {
                                 Upload Resume
                                 <span className='badge badge--best'>Best Results</span>
                             </label>
-                            <label className='dropzone' htmlFor='resume'>
+                            <label className={`dropzone${resumeFile ? ' dropzone--filled' : ''}`} htmlFor='resume'>
                                 <span className='dropzone__icon'>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg>
                                 </span>
-                                <p className='dropzone__title'>Click to upload or drag &amp; drop</p>
-                                <p className='dropzone__subtitle'>PDF or DOCX (Max 5MB)</p>
-                                <input ref={resumeInputRef} hidden type='file' id='resume' name='resume' accept='.pdf,.docx' />
+                                {resumeFile ? (
+                                    <>
+                                        <p className='dropzone__title'>✓ {resumeFile.name}</p>
+                                        <p className='dropzone__subtitle'>{(resumeFile.size / 1024).toFixed(0)} KB · Click to change</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className='dropzone__title'>Click to upload or drag &amp; drop</p>
+                                        <p className='dropzone__subtitle'>PDF only (Max 3MB)</p>
+                                    </>
+                                )}
+                                <input ref={resumeInputRef} onChange={handleResumeChange} hidden type='file' id='resume' name='resume' accept='.pdf' />
                             </label>
                         </div>
 
@@ -107,6 +159,12 @@ const Home = () => {
                             </span>
                             <p>Either a <strong>Resume</strong> or a <strong>Self Description</strong> is required to generate a personalized plan.</p>
                         </div>
+
+                        {error && (
+                            <div className='info-box' style={{ borderColor: '#ff5470', color: '#ff5470' }}>
+                                <p style={{ margin: 0 }}>{error}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
