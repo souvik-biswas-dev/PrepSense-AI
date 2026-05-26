@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="32" fill="#E8004D"/>
+  <!-- Letter P -->
+  <text x="13" y="46" font-family="Georgia, serif" font-weight="700" font-size="38" fill="white">P</text>
+  <!-- Lightning bolt accent -->
+  <polygon points="38,12 30,34 36,34 28,54 46,28 39,28" fill="white" opacity="0.92"/>
+</svg>
