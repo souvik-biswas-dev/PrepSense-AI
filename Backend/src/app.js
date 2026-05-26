@@ -8,7 +8,7 @@ app.use(express.json())
 app.use(cookieParser())
 const allowedOrigins = [
     /^http:\/\/localhost(:\d+)?$/,
-    process.env.FRONTEND_URL,
+    process.env.FRONTEND_URL?.replace(/\/$/, ""),
 ].filter(Boolean)
 
 app.use(cors({
