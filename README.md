@@ -4,6 +4,18 @@
 
 ---
 
+## Screenshots
+
+| Home | Interview Strategy |
+|---|---|
+| ![Home](docs/screenshots/homepage.png) | ![Interview Strategy](docs/screenshots/interview-strategy.png) |
+
+| Login | Register |
+|---|---|
+| ![Login](docs/screenshots/login-page.png) | ![Register](docs/screenshots/register-page.png) |
+
+---
+
 ## What It Does
 
 Upload your resume and paste a job description. PrepSense uses Google Gemini to:

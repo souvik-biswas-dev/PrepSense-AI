@@ -198,9 +198,32 @@ const Home = () => {
 
             {/* Page Footer */}
             <footer className='page-footer'>
-                <a href='#'>Privacy Policy</a>
-                <a href='#'>Terms of Service</a>
-                <a href='#'>Help Center</a>
+                <div className='page-footer__top'>
+                    <div className='page-footer__credit'>
+                        <span className='page-footer__label'>Architected &amp; Engineered by</span>
+                        <span className='page-footer__name'>Souvik Biswas</span>
+                    </div>
+                    <div className='page-footer__links'>
+                        <a href='https://souvikbiswas-portfolio.pages.dev' target='_blank' rel='noopener noreferrer' className='page-footer__link'>
+                            <svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10' /><line x1='2' y1='12' x2='22' y2='12' /><path d='M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z' /></svg>
+                            Portfolio
+                        </a>
+                        <a href='https://github.com/souvik-biswas-dev/' target='_blank' rel='noopener noreferrer' className='page-footer__link'>
+                            <svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='currentColor'><path d='M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2c-3.2.7-3.87-1.36-3.87-1.36-.53-1.35-1.3-1.71-1.3-1.71-1.06-.72.08-.71.08-.71 1.18.08 1.8 1.21 1.8 1.21 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.47.11-3.06 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 5.82 0c2.22-1.49 3.2-1.18 3.2-1.18.63 1.59.23 2.77.11 3.06.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.41-5.27 5.69.42.36.8 1.08.8 2.18v3.23c0 .31.21.68.8.56C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z' /></svg>
+                            GitHub
+                        </a>
+                    </div>
+                </div>
+                <div className='page-footer__divider' />
+                <div className='page-footer__stack'>
+                    <span className='page-footer__stack-label'>Built with</span>
+                    <span className='tech-chip'>React 19</span>
+                    <span className='tech-chip'>Vite</span>
+                    <span className='tech-chip'>Node.js</span>
+                    <span className='tech-chip'>Express</span>
+                    <span className='tech-chip'>MongoDB</span>
+                    <span className='tech-chip'>Gemini AI</span>
+                </div>
             </footer>
         </div>
     )
