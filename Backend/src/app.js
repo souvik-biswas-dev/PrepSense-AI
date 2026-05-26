@@ -4,8 +4,6 @@ const cors = require("cors")
 
 const app = express()
 
-app.use(express.json())
-app.use(cookieParser())
 const allowedOrigins = [
     /^http:\/\/localhost(:\d+)?$/,
     process.env.FRONTEND_URL?.replace(/\/$/, ""),
@@ -13,8 +11,14 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: allowedOrigins,
-    credentials: true
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
 }))
+
+app.options("*", cors())
+app.use(express.json())
+app.use(cookieParser())
 
 /* require all the routes here */
 const authRouter = require("./routes/auth.routes")
