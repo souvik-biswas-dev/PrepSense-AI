@@ -17,7 +17,7 @@ export async function register({ username, email, password }) {
         if (response.data?.token) localStorage.setItem("token", response.data.token)
         return response.data
     } catch (err) {
-        console.log(err)
+        return err.response?.data || { message: "Something went wrong. Please try again." }
     }
 }
 
@@ -27,7 +27,7 @@ export async function login({ email, password }) {
         if (response.data?.token) localStorage.setItem("token", response.data.token)
         return response.data
     } catch (err) {
-        console.log(err)
+        return err.response?.data || { message: "Something went wrong. Please try again." }
     }
 }
 

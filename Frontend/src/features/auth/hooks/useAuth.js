@@ -14,11 +14,11 @@ export const useAuth = () => {
         setLoading(true)
         try {
             const data = await login({ email, password })
-            if (!data?.user) return false
+            if (!data?.user) return { success: false, message: data?.message || "Invalid email or password" }
             setUser(data.user)
-            return true
+            return { success: true }
         } catch (err) {
-            return false
+            return { success: false, message: "Something went wrong. Please try again." }
         } finally {
             setLoading(false)
         }
@@ -28,11 +28,11 @@ export const useAuth = () => {
         setLoading(true)
         try {
             const data = await register({ username, email, password })
-            if (!data?.user) return false
+            if (!data?.user) return { success: false, message: data?.message || "Registration failed" }
             setUser(data.user)
-            return true
+            return { success: true }
         } catch (err) {
-            return false
+            return { success: false, message: "Something went wrong. Please try again." }
         } finally {
             setLoading(false)
         }

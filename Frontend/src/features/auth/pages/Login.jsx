@@ -10,11 +10,14 @@ const Login = () => {
 
     const [ email, setEmail ] = useState("")
     const [ password, setPassword ] = useState("")
+    const [ error, setError ] = useState("")
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        const success = await handleLogin({email,password})
-        if (success) navigate('/')
+        setError("")
+        const result = await handleLogin({email,password})
+        if (result.success) navigate('/')
+        else setError(result.message)
     }
 
     if(loading){
@@ -39,6 +42,7 @@ const Login = () => {
                             onChange={(e) => { setPassword(e.target.value) }}
                             type="password" id="password" name='password' placeholder='Enter password' />
                     </div>
+                    {error && <p className='form-error'>{error}</p>}
                     <button className='button primary-button' >Login</button>
                 </form>
                 <p>Don't have an account? <Link to={"/register"} >Register</Link> </p>
