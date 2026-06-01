@@ -6,6 +6,7 @@ const app = express()
 
 const allowedOrigins = [
     /^http:\/\/localhost(:\d+)?$/,
+    /^https:\/\/([a-z0-9]+\.)?prepsense-ai\.pages\.dev$/,
     process.env.FRONTEND_URL?.replace(/\/$/, ""),
 ].filter(Boolean)
 
