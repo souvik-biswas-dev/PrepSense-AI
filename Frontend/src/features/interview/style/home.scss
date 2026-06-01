@@ -444,13 +444,29 @@ $font-stack:     system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Robot
     }
 }
 
-.tech-chip {
-    font-size: 0.7rem;
-    font-weight: 500;
-    padding: 0.2rem 0.55rem;
-    color: $text-primary;
-    background-color: rgba($accent, 0.08);
-    border: 1px solid rgba($accent, 0.25);
-    border-radius: 0.3rem;
-    letter-spacing: 0.02em;
+.tech-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0.28rem;
+    background-color: $bg-panel;
+    border: 1px solid $border-color;
+    border-radius: 0.35rem;
+    transition: border-color 0.2s, background-color 0.2s;
+
+    svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    &:hover {
+        border-color: $accent;
+        background-color: rgba($accent, 0.08);
+    }
+
+    &--express {
+        color: $text-primary;
+    }
 }
