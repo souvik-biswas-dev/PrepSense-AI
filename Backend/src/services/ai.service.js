@@ -7,6 +7,22 @@ const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY
 })
 
+/**
+ * @description Wrapper around ai.models.generateContent that retries when the
+ * model is overloaded (503 UNAVAILABLE), waiting 2s then 4s between attempts.
+ */
+async function generateContentWithRetry(request, attempts = 3) {
+    for (let attempt = 1; ; attempt++) {
+        try {
+            return await ai.models.generateContent(request)
+        } catch (err) {
+            const overloaded = err?.status === 503 || String(err?.message).includes('"code":503')
+            if (!overloaded || attempt === attempts) throw err
+            await new Promise((resolve) => setTimeout(resolve, attempt * 2000))
+        }
+    }
+}
+
 
 const interviewReportSchema = z.object({
     matchScore: z.number().describe("A score between 0 and 100 indicating how well the candidate's profile matches the job describe"),
@@ -41,7 +57,7 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
                         Job Description: ${jobDescription}
 `
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry({
         model: "gemini-3-flash-preview",
         contents: prompt,
         config: {
@@ -99,7 +115,7 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
                         The resume should not be so lengthy, it should ideally be 1-2 pages long when converted to PDF. Focus on quality rather than quantity and make sure to include all the relevant information that can increase the candidate's chances of getting an interview call for the given job description.
                     `
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry({
         model: "gemini-3-flash-preview",
         contents: prompt,
         config: {
