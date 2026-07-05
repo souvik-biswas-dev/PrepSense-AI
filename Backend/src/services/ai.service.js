@@ -58,7 +58,11 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
 
 
 async function generatePdfFromHtml(htmlContent) {
-    const browser = await puppeteer.launch()
+    // Chromium's sandbox is unavailable inside the container; the process
+    // already runs as a non-root user, and it only renders our own HTML.
+    const browser = await puppeteer.launch({
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+    })
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "networkidle0" })
 
